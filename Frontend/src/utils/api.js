@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api'; // Replace with your actual API base URL
+const API_BASE_URL = 'https://app-backend-api-pi.vercel.app/api'; // Replace with your actual API base URL
 
 const api = axios.create({
   baseURL: API_BASE_URL,
