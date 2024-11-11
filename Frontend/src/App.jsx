@@ -30,7 +30,9 @@ export default function App() {
     if (refreshToken) {
       const refreshTokenInterval = setInterval(async () => {
         try {
-          await refreshAccessToken(refreshToken);
+          await refreshAccessToken(refreshToken,{
+            withCredentials: true
+          });
         } catch (error) {
           console.error("Failed to refresh token:", error);
           handleLogout();
