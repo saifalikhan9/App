@@ -26,11 +26,12 @@ export const refreshToken = asyncHandler(async (req, res) => {
   
     // Generate a new access token
     const newAccessToken = generateAccessToken(user);
-    console.log(newAccessToken, "generated accesstoken");
+
 
     // Set the new access token in an HTTP-only, secure cookie
     res.cookie("accessToken", newAccessToken, {
-      httpOnly: true
+      httpOnly: true,
+      secure: true
     });
 
     res.status(200).json({ message: "Access token refreshed", accessToken: newAccessToken });
@@ -71,8 +72,8 @@ export const login = asyncHandler(async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    res.cookie("accessToken", accessToken, {httpOnly: true,});
-    res.cookie("refreshToken", refreshToken, {httpOnly: true,});
+    res.cookie("accessToken", accessToken, {httpOnly: true,secure: true});
+    res.cookie("refreshToken", refreshToken, {httpOnly: true,secure: true});
     res.status(200).json({message:"Logged in Successfully", data: {user,refreshToken,accessToken}});
   } catch (error) {
     if (error instanceof ZodError) {
