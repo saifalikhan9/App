@@ -6,13 +6,10 @@ import { z, ZodError } from "zod";
 import { generateAccessToken, generateRefreshToken } from "./utils/token.js";
 // import bcrypt from "bcrypt";
 
-let refreshTokenSaved = "";
-
 
 // Refresh token endpoint set new accesstoken
 export const refreshToken = asyncHandler(async (req, res) => {
-  const incomingRefreshToken =
-    req.cookies.refreshToken || req.body.refreshToken;
+  const incomingRefreshToken = req.cookies.refreshToken;
   if (!incomingRefreshToken)
     return res.status(401).json({ message: "Refresh token is required" });
   try {
@@ -22,32 +19,21 @@ export const refreshToken = asyncHandler(async (req, res) => {
       process.env.REFRESH_TOKEN_SECRET
     );
     const user = { username: decoded.username };
-   
 
     if (!user) {
       throw new Error({ message: "Invalid refresh token" });
     }
-    if (incomingRefreshToken !== refreshTokenSaved) {
-      throw new Error({ message: "Refresh token is expired or used" });
-    }
+  
     // Generate a new access token
     const newAccessToken = generateAccessToken(user);
-    const newRefeshToken = generateRefreshToken(user);
+    console.log(newAccessToken, "generated accesstoken");
 
-    refreshTokenSaved= newRefeshToken
     // Set the new access token in an HTTP-only, secure cookie
     res.cookie("accessToken", newAccessToken, {
-      httpOnly: true,
-      secure: true,
-    });
-    res.cookie("refreshToken", newRefeshToken, {
-      httpOnly: true,
-      secure: true,
+      httpOnly: true
     });
 
-    res
-      .status(200)
-      .json({ message: "Access token refreshed", accessToken: newAccessToken });
+    res.status(200).json({ message: "Access token refreshed", accessToken: newAccessToken });
   } catch (err) {
     // Check if error is due to token expiration
     if (err.name === "TokenExpiredError") {
@@ -80,19 +66,14 @@ export const login = asyncHandler(async (req, res) => {
     //   return res.status(401).json({ message: "Invalid username or password" });
     // }
     const user = { username };
+    console.log(user , " from login");
+    
     const accessToken = generateAccessToken(user);
-    refreshTokenSaved = generateRefreshToken(user);
+    const refreshToken = generateRefreshToken(user);
 
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: true,
-    });
-    res.cookie("refreshToken", refreshTokenSaved, {
-      httpOnly: true,
-      secure: true,
-    });
-
-    res.status(200).json({ refreshTokenSaved, user });
+    res.cookie("accessToken", accessToken, {httpOnly: true,});
+    res.cookie("refreshToken", refreshToken, {httpOnly: true,});
+    res.status(200).json({message:"Logged in Successfully", data: {user,refreshToken,accessToken}});
   } catch (error) {
     if (error instanceof ZodError) {
       return res
@@ -173,8 +154,6 @@ export const createEmployee = asyncHandler(async (req, res) => {
       .json({ message: "Employee created successfully", data: newEmployee });
   } catch (error) {
     if (error instanceof ZodError) {
-     
-      
       return res
         .status(400)
         .json({ message: "Invalid input data", error: error.issues });
@@ -221,14 +200,11 @@ export const getEmployeeById = asyncHandler(async (req, res) => {
 const editEmployeeSchema = z.object({
   f_Name: z.string().trim().min(1).optional(),
   f_Email: z.string().email().toLowerCase().optional(),
-  f_Mobile: z.preprocess(
-    (val) => {
-      if (val === '' || val === null) return undefined;
-      const num = Number(val);
-      return isNaN(num) ? undefined : num;
-    },
-    z.number().int().positive().optional()
-  ),
+  f_Mobile: z.preprocess((val) => {
+    if (val === "" || val === null) return undefined;
+    const num = Number(val);
+    return isNaN(num) ? undefined : num;
+  }, z.number().int().positive().optional()),
   f_Designation: z.enum(["HR", "Manager", "Sales"]).optional(),
   f_Gender: z.enum(["Male", "Female", "Other"]).optional(),
   f_Course: z.enum(["MCA", "BCA", "BSC"]).optional(),
@@ -248,13 +224,13 @@ export const editEmployee = async (req, res) => {
     // Parallel processing for validation and file check
     const [validationResult, fileCheck] = await Promise.all([
       editEmployeeSchema.safeParseAsync(data),
-      file ? checkFileValidity(file) : Promise.resolve(null)
+      file ? checkFileValidity(file) : Promise.resolve(null),
     ]);
 
     if (!validationResult.success) {
       return res.status(400).json({
         message: "Invalid input data",
-        errors: validationResult.error.errors
+        errors: validationResult.error.errors,
       });
     }
 
@@ -280,12 +256,12 @@ export const editEmployee = async (req, res) => {
       {
         $set: {
           ...validationResult.data,
-          f_Image: avatar.url
-        }
+          f_Image: avatar.url,
+        },
       },
-      { 
+      {
         new: true,
-        runValidators: true
+        runValidators: true,
       }
     );
 
@@ -298,10 +274,10 @@ export const editEmployee = async (req, res) => {
       employee: updatedEmployee,
     });
   } catch (error) {
-    console.error('Server error:', error);
+    console.error("Server error:", error);
     res.status(500).json({
       message: "Internal server error",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -314,20 +290,19 @@ const checkFileValidity = async (file) => {
   if (!allowedFormats.includes(file.mimetype)) {
     return {
       isValid: false,
-      message: "Only JPG or PNG formats are allowed."
+      message: "Only JPG or PNG formats are allowed.",
     };
   }
 
   if (file.size > maxSize) {
     return {
       isValid: false,
-      message: "File size should not exceed 5MB"
+      message: "File size should not exceed 5MB",
     };
   }
 
   return { isValid: true };
 };
-
 
 export const updateUserAvatar = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.file?.path;
@@ -354,7 +329,6 @@ export const updateUserAvatar = asyncHandler(async (req, res) => {
 
 export const deleteEmployee = asyncHandler(async (req, res) => {
   const { Employee_Id } = req.params;
-
 
   const user = await Employee.findByIdAndDelete(Employee_Id);
 

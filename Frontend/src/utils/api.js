@@ -28,12 +28,13 @@ api.interceptors.request.use(
 export async function loginUser(username, password) {
   try {
     const response = await api.post('/login', { username, password });
-
+    console.log(response.data,"from api");
+    
 
     localStorage.setItem('accessToken', response.data.accessToken);
     localStorage.setItem('refreshToken', response.data.refreshToken);
 
-    return response.data;
+    return response.data.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || 'Login failed');
   }

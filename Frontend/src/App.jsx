@@ -16,6 +16,8 @@ import EditEmployee from "./components/EditEmployee.jsx";
 export default function App() {
   const [user, setUser] = useState(null);
   const [refreshToken, setRefreshToken] = useState(null);
+  console.log(user , "from app");
+  
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");

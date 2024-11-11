@@ -16,6 +16,9 @@ export default function EmployeeList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  console.log(employees);
+  
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,6 +29,8 @@ export default function EmployeeList() {
     try {
       setLoading(true);
       const data = await fetchEmployees();
+      console.log(data, "from load data");
+      
       setEmployees(data);
     } catch (err) {
       setError(err.message);
