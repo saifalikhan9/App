@@ -14,7 +14,7 @@ import CreateEmployee from "./components/CreateEmployee.jsx";
 import EditEmployee from "./components/EditEmployee.jsx";
 
 export default function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState("");
   const [refreshToken, setRefreshToken] = useState(null);
   console.log(user , "from app");
   
@@ -57,10 +57,11 @@ export default function App() {
 
   const handleLogout = async () => {
     await logoutUser();
-    setUser(null);
+    setUser("");
     setRefreshToken(null);
     localStorage.removeItem("user");
     localStorage.removeItem("refreshToken");
+    localStorage.removeItem("accessToken");
   };
 
   return (

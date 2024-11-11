@@ -87,7 +87,6 @@ export const login = asyncHandler(async (req, res) => {
 
 // logout
 export const logout = (req, res) => {
-  refreshTokenSaved = "";
   const options = { httpOnly: true, secure: true };
   return res
     .status(200)

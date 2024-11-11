@@ -42,9 +42,9 @@ export async function loginUser(username, password) {
 
 export async function logoutUser() {
   try {
+    console.log("hit");
+    
     const response = await api.post('/logout');
-
-
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
 
