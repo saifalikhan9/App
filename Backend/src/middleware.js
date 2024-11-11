@@ -1,15 +1,17 @@
 import multer from "multer";
 import jwt from "jsonwebtoken";
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, "./public/temp")
-    },
-    filename: function (req, file, cb) {
-      
-      cb(null, file.originalname)
-    }
-  })
+const storage =
+  process.env.NODE_ENV === 'production'
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+        destination: (req, file, cb) => {
+          cb(null, path.join(__dirname, 'public/temp'));
+        },
+        filename: (req, file, cb) => {
+          cb(null, Date.now() + '-' + file.originalname);
+        },
+      });
   
 export const upload = multer({ 
     storage, 
