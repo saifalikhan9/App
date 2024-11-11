@@ -1,4 +1,5 @@
 import multer from "multer";
+import path from "path"
 import jwt from "jsonwebtoken";
 
 const storage =
