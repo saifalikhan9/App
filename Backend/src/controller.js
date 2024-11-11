@@ -6,7 +6,11 @@ import { z, ZodError } from "zod";
 import { generateAccessToken, generateRefreshToken } from "./utils/token.js";
 // import bcrypt from "bcrypt";
 
-
+const options = {
+  httpOnly: true,
+  secure: true,   
+  sameSite: 'None',
+}
 // Refresh token endpoint set new accesstoken
 export const refreshToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken = req.cookies.refreshToken;
@@ -30,8 +34,7 @@ export const refreshToken = asyncHandler(async (req, res) => {
 
     // Set the new access token in an HTTP-only, secure cookie
     res.cookie("accessToken", newAccessToken, {
-      httpOnly: true,
-      secure: true
+      options
     });
 
     res.status(200).json({ message: "Access token refreshed", accessToken: newAccessToken });
@@ -72,8 +75,8 @@ export const login = asyncHandler(async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    res.cookie("accessToken", accessToken, {httpOnly: true,secure: true});
-    res.cookie("refreshToken", refreshToken, {httpOnly: true,secure: true});
+    res.cookie("accessToken", accessToken, options);
+    res.cookie("refreshToken", refreshToken, options);
     res.status(200).json({message:"Logged in Successfully", data: {user,refreshToken,accessToken}});
   } catch (error) {
     if (error instanceof ZodError) {
@@ -87,7 +90,7 @@ export const login = asyncHandler(async (req, res) => {
 
 // logout
 export const logout = (req, res) => {
-  const options = { httpOnly: true, secure: true };
+  
   return res
     .status(200)
     .clearCookie("accessToken", options)
