@@ -23,7 +23,7 @@ router.route("/logout").post(logout)
 router.use(authenticateToken);
 router
   .route("/createEmployee")
-  .post(upload.fields([{ name: "f_Image", maxCount: 1 }]), createEmployee);
+  .post(upload.single("f_Image"), createEmployee);
 router.route("/getAllEmployee").get(getAllEmployees);
 router.route("/getEmployeeById/:id").get(getEmployeeById);
 router.route("/editEmployee/:Employee_Id").put(upload.single("f_Image"), editEmployee);

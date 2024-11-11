@@ -1,5 +1,4 @@
 import { v2 as cloudinary } from "cloudinary";
-import fs from "fs";
 
 // Cloudinary configuration
 cloudinary.config({
@@ -8,40 +7,31 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const uploadOnCloudinary = async (localFilePath) => {
+const uploadOnCloudinary = async (fileBuffer, fileType) => {
   try {
-    if (!localFilePath) {
-      console.error("No file path provided.");
+    if (!fileBuffer) {
+      console.error("No file buffer provided.");
       return null;
     }
 
-    console.log("Starting upload to Cloudinary:", localFilePath);
+    console.log("Starting upload to Cloudinary");
+
+    // Convert buffer to base64
+    const fileStr = fileBuffer.toString('base64');
 
     // Upload the file to Cloudinary
-    const response = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: "auto",
-    });
+    const response = await cloudinary.uploader.upload(
+      `data:${fileType};base64,${fileStr}`,
+      {
+        resource_type: "auto",
+      }
+    );
 
-    console.log("Upload successful:", response);
-
-    // Remove local file after upload
-    await fs.promises.unlink(localFilePath);
-    console.log("Local file deleted:", localFilePath);
+    console.log("Upload successful:", response.url);
 
     return response;
   } catch (error) {
     console.error("Error uploading to Cloudinary:", error.message);
-
-    // Clean up local file if there's an error, only if it exists
-    try {
-      if (fs.existsSync(localFilePath)) {
-        await fs.promises.unlink(localFilePath);
-        console.log("Local file deleted after error:", localFilePath);
-      }
-    } catch (unlinkError) {
-      console.error("Error deleting local file:", unlinkError.message);
-    }
-
     return null;
   }
 };

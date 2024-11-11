@@ -111,6 +111,7 @@ export const createEmployee = asyncHandler(async (req, res) => {
     const { f_Name, f_Email, f_Mobile, f_Designation, f_Gender, f_Course } =
       employeeSchema.parse(req.body);
 
+    // Check for existing employee
     const existingEmployee = await Employee.findOne({
       $or: [{ f_Email }, { f_Mobile }],
     });
@@ -120,13 +121,13 @@ export const createEmployee = asyncHandler(async (req, res) => {
       });
     }
 
-    const file = req.files?.f_Image[0];
-    const path = file?.path;
-
+    // Check if file exists in request
+    const file = req.file; // Note: Changed from req.files?.f_Image[0] to req.file
     if (!file) {
       return res.status(400).json({ message: "Please attach a file" });
     }
 
+    // Validate file type
     const allowedFormats = ["image/jpeg", "image/png"];
     if (!allowedFormats.includes(file.mimetype)) {
       return res
@@ -134,7 +135,8 @@ export const createEmployee = asyncHandler(async (req, res) => {
         .json({ message: "Only JPG or PNG formats are allowed." });
     }
 
-    const avatar = await uploadOnCloudinary(path);
+    // Upload to Cloudinary using buffer
+    const avatar = await uploadOnCloudinary(file.buffer, file.mimetype);
     if (!avatar) {
       return res.status(400).json({
         message: "Error uploading to Cloudinary",
