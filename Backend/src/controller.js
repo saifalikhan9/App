@@ -215,22 +215,41 @@ const editEmployeeSchema = z.object({
   f_Course: z.enum(["MCA", "BCA", "BSC"]).optional(),
 });
 
+// Utility function for file validation
+// Utility function for file validation
+const checkFileValidity = (file) => {
+  const allowedFormats = ["image/jpeg", "image/png"];
+  if (!allowedFormats.includes(file.mimetype)) {
+    return {
+      isValid: false,
+      message: "Only JPG or PNG formats are allowed.",
+    };
+  }
+  return {
+    isValid: true,
+    message: "File is valid",
+  };
+};
+
 export const editEmployee = async (req, res) => {
   try {
     const { Employee_Id } = req.params;
     const data = req.body;
-    const file = req.file;
+    const file = req.file; // Using req.file instead of req.files
 
     // Early validation
     if (!Employee_Id) {
       return res.status(400).json({ message: "Employee ID is required" });
     }
 
+    // Get existing employee
+    const existingEmployee = await Employee.findById(Employee_Id);
+    if (!existingEmployee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
     // Parallel processing for validation and file check
-    const [validationResult, fileCheck] = await Promise.all([
-      editEmployeeSchema.safeParseAsync(data),
-      file ? checkFileValidity(file) : Promise.resolve(null),
-    ]);
+    const validationResult = await editEmployeeSchema.safeParseAsync(data);
 
     if (!validationResult.success) {
       return res.status(400).json({
@@ -239,20 +258,24 @@ export const editEmployee = async (req, res) => {
       });
     }
 
-    if (!file) {
-      return res.status(400).json({ message: "Please attach a file" });
-    }
+    let avatarUrl = existingEmployee.f_Image; // Keep existing image by default
 
-    if (!fileCheck.isValid) {
-      return res.status(400).json({ message: fileCheck.message });
-    }
+    // Handle file upload if new file is provided
+    if (file) {
+      // Check file validity
+      const fileCheck = checkFileValidity(file);
+      if (!fileCheck.isValid) {
+        return res.status(400).json({ message: fileCheck.message });
+      }
 
-    // Upload to Cloudinary
-    const avatar = await uploadOnCloudinary(file.path);
-    if (!avatar) {
-      return res.status(400).json({
-        message: "Error uploading to Cloudinary",
-      });
+      // Upload to Cloudinary using buffer
+      const avatar = await uploadOnCloudinary(file.buffer, file.mimetype);
+      if (!avatar) {
+        return res.status(400).json({
+          message: "Error uploading to Cloudinary",
+        });
+      }
+      avatarUrl = avatar.url;
     }
 
     // Update employee with validated data
@@ -261,7 +284,7 @@ export const editEmployee = async (req, res) => {
       {
         $set: {
           ...validationResult.data,
-          f_Image: avatar.url,
+          f_Image: avatarUrl,
         },
       },
       {
@@ -269,10 +292,6 @@ export const editEmployee = async (req, res) => {
         runValidators: true,
       }
     );
-
-    if (!updatedEmployee) {
-      return res.status(404).json({ message: "Employee not found" });
-    }
 
     res.status(200).json({
       message: "Employee updated successfully",
@@ -287,27 +306,7 @@ export const editEmployee = async (req, res) => {
   }
 };
 
-// Utility function for file validation
-const checkFileValidity = async (file) => {
-  const allowedFormats = ["image/jpeg", "image/png"];
-  const maxSize = 5 * 1024 * 1024; // 5MB
 
-  if (!allowedFormats.includes(file.mimetype)) {
-    return {
-      isValid: false,
-      message: "Only JPG or PNG formats are allowed.",
-    };
-  }
-
-  if (file.size > maxSize) {
-    return {
-      isValid: false,
-      message: "File size should not exceed 5MB",
-    };
-  }
-
-  return { isValid: true };
-};
 
 export const updateUserAvatar = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.file?.path;
