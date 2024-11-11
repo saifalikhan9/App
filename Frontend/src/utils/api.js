@@ -1,23 +1,22 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL|| 'http://localhost:8000/api'; // Replace with your actual API base URL
-console.log(import.meta.env.VITE_API_BASE_URL,"env");
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; 
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // This is important for handling cookies
+  withCredentials: true, 
 });
 
 function getAuthToken() {
-  return localStorage.getItem('accessToken');  // Get the token from localStorage
+  return localStorage.getItem('accessToken');  
 }
 
-// Intercept requests to add the token in Authorization header
+
 api.interceptors.request.use(
   (config) => {
     const token = getAuthToken();
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;  // Add token to headers
+      config.headers['Authorization'] = `Bearer ${token}`;  
     }
     return config;
   },
@@ -30,7 +29,7 @@ export async function loginUser(username, password) {
   try {
     const response = await api.post('/login', { username, password });
 
-    // Store the access and refresh token in localStorage
+
     localStorage.setItem('accessToken', response.data.accessToken);
     localStorage.setItem('refreshToken', response.data.refreshToken);
 
@@ -44,7 +43,7 @@ export async function logoutUser() {
   try {
     const response = await api.post('/logout');
 
-    // Remove the tokens on logout
+
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
 
